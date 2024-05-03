@@ -2,6 +2,9 @@ package com.fan.wpdogschat.common.websocket.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
+import com.fan.wpdogschat.common.user.dao.UserDao;
+import com.fan.wpdogschat.common.user.domain.entity.User;
+import com.fan.wpdogschat.common.user.service.LoginService;
 import com.fan.wpdogschat.common.websocket.domain.dto.WSChannelExtraDTO;
 import com.fan.wpdogschat.common.websocket.domain.enums.WSRespTypeEnum;
 import com.fan.wpdogschat.common.websocket.domain.vo.req.WSBaseReq;
@@ -30,6 +33,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class WebSocketServiceImpl implements WebSocketService {
+
+    @Autowired
+    private UserDao userDao;
+
+    @Autowired
+    private LoginService loginService;
 
     @Autowired
     private WxMpService wxMpService;
@@ -73,6 +82,38 @@ public class WebSocketServiceImpl implements WebSocketService {
         WxMpQrCodeTicket wxMpQrCodeTicket = wxMpService.getQrcodeService().qrCodeCreateTmpTicket(code, (int) DURATION.getSeconds());
         // 把码推送给前端
         sendMsg(channel, WebSocketAdapter.buildResp(wxMpQrCodeTicket));
+    }
+
+    @Override
+    public void offLine(Channel channel) {
+        ONLINE_WS_MAP.remove(channel);
+        //todo 用户下线
+    }
+
+    @Override
+    public void scanLoginSuccess(Integer code, Long uid) {
+        //确认连接在机器上
+        Channel channel = WAIT_LOGIN_MAP.getIfPresent(code);
+        if(Objects.isNull(channel)){
+            return;
+        }
+        User user = userDao.getById(uid);
+        //移除code
+        WAIT_LOGIN_MAP.invalidate(code);
+
+        //todo 调用登陆模块获取token
+        String token = loginService.login(uid);
+        sendMsg(channel,WebSocketAdapter.buildResp(user,token));
+    }
+
+
+    @Override
+    public void waitAuthorize(Integer code) {
+        Channel channel = WAIT_LOGIN_MAP.getIfPresent(code);
+        if(Objects.isNull(channel)){
+            return;
+        }
+        sendMsg(channel,WebSocketAdapter.buildWaitAuthorize());
     }
 
     /**

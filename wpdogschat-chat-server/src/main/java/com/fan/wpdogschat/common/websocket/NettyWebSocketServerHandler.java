@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.fan.wpdogschat.common.websocket.domain.enums.WSReqTypeEnum;
 import com.fan.wpdogschat.common.websocket.domain.vo.req.WSBaseReq;
 import com.fan.wpdogschat.common.websocket.service.WebSocketService;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -27,6 +28,16 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Tex
         webSocketService.connect(ctx.channel());
     }
 
+    /**
+     * 客户端主动下线
+     * @param ctx
+     * @throws Exception
+     */
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        userOffLine(ctx.channel());
+    }
+
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if(evt instanceof WebSocketServerProtocolHandler.HandshakeComplete){
@@ -38,10 +49,20 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Tex
                 //读空闲
                 System.out.println("读空闲");
                 //todo 用户下线
+                userOffLine(ctx.channel());
                 //连接关闭
-                ctx.channel().close();
+
             }
         }
+    }
+
+    /**
+     * 用户下线统一处理
+     * @param channel
+     */
+    private void userOffLine(Channel channel) {
+        webSocketService.offLine(channel);
+        channel.close();
     }
 
     @Override

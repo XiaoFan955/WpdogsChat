@@ -1,5 +1,6 @@
 package com.fan.wpdogschat.common.user.controller;
 
+import com.fan.wpdogschat.common.user.service.WXMsgService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
@@ -27,6 +28,9 @@ import org.springframework.web.servlet.view.RedirectView;
 public class WxPortalController {
     @Autowired
     private WxMpService wxMpService;
+
+    @Autowired
+    private WXMsgService wxMsgService;
 
     @GetMapping("/test")
     public String getQrCode() throws WxErrorException {
@@ -67,7 +71,7 @@ public class WxPortalController {
          */
         WxOAuth2AccessToken accessToken = wxMpService.getOAuth2Service().getAccessToken(code);
         WxOAuth2UserInfo userInfo = wxMpService.getOAuth2Service().getUserInfo(accessToken, "zh_CN");
-        System.out.println(userInfo);
+        wxMsgService.authorize(userInfo);
         RedirectView redirectView = new RedirectView();
         redirectView.setUrl("www.baidu.com");
         return redirectView;
