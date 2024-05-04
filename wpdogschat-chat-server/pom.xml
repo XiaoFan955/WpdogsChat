@@ -33,10 +33,16 @@
             <artifactId>weixin-java-mp</artifactId>
             <version>4.4.0</version>
         </dependency>
-        <!---->
+        <!--本地缓存，可设置过期时间-->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
+        </dependency>
+        <!--JWT工具类-->
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>3.19.0</version>
         </dependency>
     </dependencies>
 </project>
