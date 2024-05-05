@@ -96,7 +96,7 @@ public class WXMsgServiceImpl implements WXMsgService {
     }
 
     private void fillUserInfo(Long uid, WxOAuth2UserInfo userInfo) {
-       User user = UserAdapter.buildAuthorizedUser(uid,userInfo);
+       User user = UserAdapter.buildAuthorizeUser(uid,userInfo);
        userDao.updateById(user);
     }
 

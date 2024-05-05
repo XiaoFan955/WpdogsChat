@@ -22,6 +22,7 @@ import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
 import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -42,6 +43,9 @@ public class WebSocketServiceImpl implements WebSocketService {
 
     @Autowired
     private WxMpService wxMpService;
+
+    @Autowired
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     /**
      * ONLINE_WS_MAP 管理所有用户的连接（登录态/游客）
@@ -103,7 +107,7 @@ public class WebSocketServiceImpl implements WebSocketService {
 
         //todo 调用登陆模块获取token
         String token = loginService.login(uid);
-        sendMsg(channel,WebSocketAdapter.buildResp(user,token));
+        loginSuccess(channel,user,token);
     }
 
 
@@ -114,6 +118,42 @@ public class WebSocketServiceImpl implements WebSocketService {
             return;
         }
         sendMsg(channel,WebSocketAdapter.buildWaitAuthorize());
+    }
+
+    @Override
+    public void authorize(Channel channel, String token) {
+        Long uid = loginService.getValidUid(token);
+        if(Objects.nonNull(uid)){
+            //登陆成功
+            User user = userDao.getById(uid);
+            loginSuccess(channel,user,token);
+
+        }else{
+            //token失效，向前端发送token失效消息
+            sendMsg(channel,WebSocketAdapter.buildInvalidTokenResp());
+        }
+    }
+
+    /**
+     * 用户成功登陆
+     * @param channel
+     * @param user
+     * @param token
+     */
+    private void loginSuccess(Channel channel, User user, String token) {
+        //保存channel对应的uid
+        WSChannelExtraDTO wsChannelExtraDTO = ONLINE_WS_MAP.get(channel);
+        wsChannelExtraDTO.setUid(user.getId());
+        //todo 用户上线成功的状态变更事件
+        //推送消息
+        sendMsg(channel,WebSocketAdapter.buildResp(user,token));
+    }
+
+    @Override
+    public void sendMsgToAll(WSBaseResp<?> msg) {
+        ONLINE_WS_MAP.forEach((channel, ext) -> {
+            threadPoolTaskExecutor.execute(() -> sendMsg(channel, msg));
+        });
     }
 
     /**

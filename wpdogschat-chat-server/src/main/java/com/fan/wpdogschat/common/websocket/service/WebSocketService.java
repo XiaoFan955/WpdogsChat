@@ -1,5 +1,6 @@
 package com.fan.wpdogschat.common.websocket.service;
 
+import com.fan.wpdogschat.common.websocket.domain.vo.resp.WSBaseResp;
 import io.netty.channel.Channel;
 
 public interface WebSocketService {
@@ -12,4 +13,8 @@ public interface WebSocketService {
     void scanLoginSuccess(Integer code, Long id);
 
     void waitAuthorize(Integer code);
+
+    void authorize(Channel channel, String token);
+
+    void sendMsgToAll(WSBaseResp<?> msg);
 }

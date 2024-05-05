@@ -14,7 +14,7 @@ public class RedisTest {
     @Test
     public void redisTest(){
         RedisUtils.set("name","xiaofan");
-        String name = (String) RedisUtils.get("name");
+        String name = (String) RedisUtils.getStr("name");
         System.out.println(name);
     }
 }

@@ -21,4 +21,6 @@ public interface WXMsgService {
      * @param userInfo
      */
     void authorize(WxOAuth2UserInfo userInfo);
+
+
 }
